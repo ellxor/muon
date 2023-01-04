@@ -96,9 +96,7 @@ void render_board(Window *window)
 		/* Chessboard square is black if the evenness of the file is equal to the evenness
 		 * of the rank, hence is white if not equal (xor) */
 		bool white = (sq ^ (sq >> 3)) & 1;
-
 		ImGui::PushStyleColor(ImGuiCol_Button, white ? BOARD_WHITE : BOARD_BLACK);
-		ImGui::PushStyleColor(ImGuiCol_Text, white ? BOARD_WHITE : BOARD_BLACK);
 
 		constexpr auto uv0 = ImVec2(0.0f, 0.0f);
 		constexpr auto uv1 = ImVec2(1.0f, 1.0f);
@@ -128,7 +126,7 @@ void render_board(Window *window)
 	 * pushed styles, or find a way to clear all of them
 	 */
 	ImGui::PopStyleVar(4);
-	ImGui::PopStyleColor(128);
+	ImGui::PopStyleColor(64);
 	ImGui::End();
 }
 
