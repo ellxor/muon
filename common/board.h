@@ -19,7 +19,8 @@ typedef enum : uint8_t { NONE, PAWN, KNIGHT, BISHOP, CASTLE, ROOK, QUEEN, KING }
  */
 typedef struct { bitboard x, y, z, white; } Board;
 
-static inline Board startpos(void) {
+static inline
+Board startpos(void) {
 	constexpr Board board = { .x = 0x34FF00000000FF34,
 	                          .y = 0x7E0000000000007E,
 	                          .z = 0x9900000000000099,
@@ -27,12 +28,14 @@ static inline Board startpos(void) {
 	return board;
 }
 
-static inline bitboard occupied(Board board) {
+static inline
+bitboard occupied(Board board) {
 	return board.x | board.y | board.z;
 }
 
 
-static inline bitboard extract(Board board, piecetype piece) {
+static inline
+bitboard extract(Board board, piecetype piece) {
 	if (piece == ROOK)
 		return board.z &~ board.y; // castles are also rooks
 
@@ -42,5 +45,14 @@ static inline bitboard extract(Board board, piecetype piece) {
 	return ((piece & 1) ? board.x :~ board.x)
 	     & ((piece & 2) ? board.y :~ board.y)
 	     & ((piece & 4) ? board.z :~ board.z);
+}
+
+
+static inline
+piecetype extract_piece(Board board, square sq)
+{
+	return (piecetype)((((board.x >> sq) & 1) << 0)
+	                 | (((board.y >> sq) & 1) << 1)
+	                 | (((board.z >> sq) & 1) << 2));
 }
 
