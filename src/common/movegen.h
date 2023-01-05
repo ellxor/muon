@@ -9,7 +9,7 @@
  * flag field indicates that the last moves was a "special" move (i.e. promotion, en-passant or
  * castling), which is necessary to unmake the move in a game tree.
  */
-typedef struct { uint16_t init: 6, dest: 6, piece: 3, castling: 1; } Move;
+typedef struct { uint16_t init: 6, dest: 6, piece: 3, castling: 1; } move;
 
 /* The generated moves are stored in a fixed-size buffer for performance, reallocations would slow
  * us down a lot. It is usually a large overallocation as chess has a branching factor of around
@@ -19,14 +19,14 @@ typedef struct { uint16_t init: 6, dest: 6, piece: 3, castling: 1; } Move;
  *   fen: "3Q4/1Q4Q1/4Q3/2Q4R/Q4Q2/3Q4/1Q4Rp/1K1BBNNk w - - 0 1"
  */
 constexpr size_t MAX_MOVES = 256;
-typedef struct { size_t count; Move buffer[MAX_MOVES]; } MoveBuffer;
+typedef struct { size_t count; move buffer[MAX_MOVES]; } MoveBuffer;
 
 static inline
-void append_move(MoveBuffer *moves, Move move) {
+void append_move(MoveBuffer *moves, move move) {
 	moves->buffer[moves->count++] = move;
 }
 
 MoveBuffer generate_moves(Board);
-void   make_move(Board*, Move);
-void unmake_move(Board*, Move);
+void   make_move(Board*, move);
+void unmake_move(Board*, move);
 

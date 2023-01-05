@@ -12,14 +12,14 @@ void generate_partial_pawn_moves(bitboard moves, square direction, bool promotio
 		square init = dest - direction;
 
 		if (promotion) {
-			append_move(buffer, (Move) { init, dest, KNIGHT, false });
-			append_move(buffer, (Move) { init, dest, BISHOP, false });
-			append_move(buffer, (Move) { init, dest, ROOK,   false });
-			append_move(buffer, (Move) { init, dest, QUEEN,  false });
+			append_move(buffer, (move) { init, dest, KNIGHT, false });
+			append_move(buffer, (move) { init, dest, BISHOP, false });
+			append_move(buffer, (move) { init, dest, ROOK,   false });
+			append_move(buffer, (move) { init, dest, QUEEN,  false });
 		}
 
 		else {
-			append_move(buffer, (Move) { init, dest, PAWN, false });
+			append_move(buffer, (move) { init, dest, PAWN, false });
 		}
 
 		moves &= moves - 1;
@@ -143,7 +143,7 @@ void generate_piece_moves(piecetype piece, Board board, bitboard targets, bitboa
 
 		while (attacks) {
 			square dest = trailing_zeros(attacks);
-			append_move(buffer, (Move) { init, dest, piece, false });
+			append_move(buffer, (move) { init, dest, piece, false });
 
 			attacks &= attacks - 1;
 		}
@@ -164,7 +164,7 @@ void generate_king_moves(Board board, bitboard attacked, square king, MoveBuffer
 
 	while (attacks) {
 		square dest = trailing_zeros(attacks);
-		append_move(buffer, (Move) { king, dest, KING, false });
+		append_move(buffer, (move) { king, dest, KING, false });
 		attacks &= attacks - 1;
 	}
 
@@ -181,8 +181,8 @@ void generate_king_moves(Board board, bitboard attacked, square king, MoveBuffer
 	constexpr bitboard QATT = (1 << C1) + (1 << D1) + (1 << E1);
 	constexpr bitboard QOCC = (1 << B1) + (1 << C1) + (1 << D1);
 
-	constexpr Move  kingside = { E1, G1, KING, true };
-	constexpr Move queenside = { E1, C1, KING, true };
+	constexpr move  kingside = { E1, G1, KING, true };
+	constexpr move queenside = { E1, C1, KING, true };
 
 	if (castling & (1 << A1) && !(occ & QOCC) && !(attacked & QATT))
 		append_move(buffer, queenside);
@@ -344,7 +344,7 @@ void set_square(Board *board, square sq, piecetype piece)
 /* Make a legal move on the board state and update it. Note: like generate_moves, this function
  * also assumes that both board and move are legal.
  */
-void make_move(Board *board, Move move)
+void make_move(Board *board, move move)
 {
 	bitboard clear = (1ull << move.init) 
 	               | (1ull << move.dest);
