@@ -5,10 +5,10 @@ available for any OS with minimal dependecies.
 
 
 **Requirements:**
-- C/C++ compiler that supports C23/C++20
+- C/C++ compiler that supports C23/C++20 (currently this is only GCC 13)
 - SDL2 (at least version 2.0.17) and SDL2 Image
 - Meson/Ninja
-  
+
 
 **Building:**
 ```
