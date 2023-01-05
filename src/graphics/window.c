@@ -42,7 +42,10 @@ Window *init_window(const char *title)
 	                                INIT_WIDTH, INIT_HEIGHT, window_flags);
 
 	window.renderer = SDL_CreateRenderer(window.frame, -1, renderer_flags);
+
 	window.board = startpos();
+	window.true_white = true;
+	window.selected = SQUARE_NONE;
 
 	if (!window.frame)    log_fatal_error("could not create SDL window");
 	if (!window.renderer) log_fatal_error("could not create SDL renderer");

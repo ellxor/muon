@@ -24,7 +24,7 @@
 
 int main()
 {
-	//init_bitbase_tables();
+	init_bitbase_tables();
 
 	Window *window = init_window("Muon pre-alpha version");
 	init_imgui(window);

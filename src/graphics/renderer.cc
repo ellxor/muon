@@ -8,6 +8,8 @@ extern "C" {
 #include <stdio.h>
 #include <stdint.h>
 
+#include <common/movegen.h>
+
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_sdl.h"
 #include "imgui/backends/imgui_impl_sdlrenderer.h"
@@ -52,6 +54,41 @@ constexpr ImVec4 get_color_from_hex(uint32_t hex_color)
 }
 
 
+static inline
+void handle_clicked_square(Window *window, square sq)
+{
+	if (window->selected == SQUARE_NONE)
+		window->selected = sq;
+
+	else {
+		if (!window->legal_moves_generated) {
+			window->legal_moves = generate_moves(window->board);
+			window->legal_moves_generated = true;
+		}
+
+		square init = window->selected;
+		square dest = sq;
+
+		/* Rotate square back if it is black to move */
+		if (!window->true_white)
+			init ^= 56, dest ^= 56;
+
+		for (size_t i = 0; i < window->legal_moves.count; i += 1) {
+			Move move = window->legal_moves.buffer[i];
+
+			if (move.init == init && move.dest == dest) {
+				make_move(&window->board, move);
+				window->true_white = !window->true_white;
+				window->legal_moves_generated = false;
+				break;
+			}
+		}
+
+		window->selected = SQUARE_NONE;
+	}
+}
+
+
 /* Render the chess board itself. For now, this fills the entire window.
  */
 static inline
@@ -87,6 +124,9 @@ void render_board(Window *window)
 	static char name[3];
 
 	for (square i = 0; i < 64; i += 1) {
+		/* The square is the index with the rank flipped, as we render the board from top to
+		 * bottom, whereas the squares are indexed bottom-up with A1 being 0.
+		 */
 		square sq = i ^ 56;
 		square file = sq & 7;
 
@@ -104,10 +144,19 @@ void render_board(Window *window)
 
 		/* Prefix label name with ## to specifiy to IMGUI that it is an ID, and not label
 		 * text */
-		sprintf(name, "##%d", sq);
+		sprintf(name, "##%u", sq);
 
-		piecetype piece = extract_piece(window->board, sq);
-		bool white_piece = (window->board.white >> sq) & 1;
+		/* We also need a square for the side to move as we store rotated bitboards. If the
+		 * board is from black's perspective, we need to flip the square to get the piece
+		 * and colour information.
+		 */
+		square stm_square = sq ^ (!window->true_white * 56);
+
+		piecetype piece = extract_piece(window->board, stm_square);
+
+		/* Again, we need to take care in getting the true colour of a piece */
+		bool friendly_piece = (window->board.white >> stm_square) & 1;
+		bool white_piece = friendly_piece == window->true_white;
 
 		size_t offset = white_piece ? WHITE_OFFSET : BLACK_OFFSET;
 		auto texture = (piece == NONE) ? nullptr
@@ -118,8 +167,7 @@ void render_board(Window *window)
 			: ImGui::ImageButton(name, texture, square_size, uv0, uv1,
 					     BOARD_CLEAR, no_tint);
 
-		// TODO: handle clicked square
-		if (pressed) printf("Square %u clicked...\n", sq);
+		if (pressed) handle_clicked_square(window, sq);
 	}
 
 	/* Remove styling for next object, TODO: find a better way to keep track of the number of
