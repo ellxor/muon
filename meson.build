@@ -11,7 +11,7 @@ project(
     'warning_level=3',
     'werror=true',
 
-    'buildtype=release',
+    'buildtype=debugoptimized',
     'b_lto=true',
     'b_pie=true',
   ]
