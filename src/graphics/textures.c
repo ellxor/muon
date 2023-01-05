@@ -11,20 +11,22 @@
 #include "incbin/incbin.h"
 
 /* SVG graphics are actually text files, so we include them as such.
+ * TODO: find which linker flags are necessary to include a path to these files, so that we can
+ * use relative paths from this file.
  */
-INCTXT(svg_white_pawn,   "graphics/resources/wP.svg");
-INCTXT(svg_white_knight, "graphics/resources/wN.svg");
-INCTXT(svg_white_bishop, "graphics/resources/wB.svg");
-INCTXT(svg_white_rook,   "graphics/resources/wR.svg");
-INCTXT(svg_white_queen,  "graphics/resources/wQ.svg");
-INCTXT(svg_white_king,   "graphics/resources/wK.svg");
+INCTXT(svg_white_pawn,   "../src/graphics/resources/wP.svg");
+INCTXT(svg_white_knight, "../src/graphics/resources/wN.svg");
+INCTXT(svg_white_bishop, "../src/graphics/resources/wB.svg");
+INCTXT(svg_white_rook,   "../src/graphics/resources/wR.svg");
+INCTXT(svg_white_queen,  "../src/graphics/resources/wQ.svg");
+INCTXT(svg_white_king,   "../src/graphics/resources/wK.svg");
 
-INCTXT(svg_black_pawn,   "graphics/resources/bP.svg");
-INCTXT(svg_black_knight, "graphics/resources/bN.svg");
-INCTXT(svg_black_bishop, "graphics/resources/bB.svg");
-INCTXT(svg_black_rook,   "graphics/resources/bR.svg");
-INCTXT(svg_black_queen,  "graphics/resources/bQ.svg");
-INCTXT(svg_black_king,   "graphics/resources/bK.svg");
+INCTXT(svg_black_pawn,   "../src/graphics/resources/bP.svg");
+INCTXT(svg_black_knight, "../src/graphics/resources/bN.svg");
+INCTXT(svg_black_bishop, "../src/graphics/resources/bB.svg");
+INCTXT(svg_black_rook,   "../src/graphics/resources/bR.svg");
+INCTXT(svg_black_queen,  "../src/graphics/resources/bQ.svg");
+INCTXT(svg_black_king,   "../src/graphics/resources/bK.svg");
 
 /* We bake the raw piece svg images into the executable in static memory
  */
