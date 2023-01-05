@@ -27,8 +27,8 @@ Window *init_window(const char *title)
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
 	/* Default window config: */
-	constexpr int INIT_WIDTH = 800;
-	constexpr int INIT_HEIGHT = 800;
+	constexpr int INIT_WIDTH = 600;
+	constexpr int INIT_HEIGHT = 600;
 
 	constexpr uint32_t window_flags = SDL_WINDOW_RESIZABLE
 	                                | SDL_WINDOW_ALLOW_HIGHDPI;

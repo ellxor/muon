@@ -74,12 +74,17 @@ void handle_clicked_square(Window *window, square sq)
 			init ^= 56, dest ^= 56;
 
 		for (size_t i = 0; i < window->legal_moves.count; i += 1) {
-			Move move = window->legal_moves.buffer[i];
+			move move = window->legal_moves.buffer[i];
 
 			if (move.init == init && move.dest == dest) {
 				make_move(&window->board, move);
+
 				window->true_white = !window->true_white;
 				window->legal_moves_generated = false;
+
+				window->last_move = move;
+				window->had_last_move = true;
+
 				break;
 			}
 		}
@@ -117,9 +122,17 @@ void render_board(Window *window)
 	ImGui::Begin("main window", nullptr, main_window_flags);
 
 	/* Default colors for chess board (stolen from lichess) */
+	constexpr auto CLEAR = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+
 	constexpr auto BOARD_BLACK = get_color_from_hex(0x8CA2AD);
 	constexpr auto BOARD_WHITE = get_color_from_hex(0xDEE3E6);
-	constexpr auto BOARD_CLEAR = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	constexpr auto SELECTED_BLACK = get_color_from_hex(0x507c65);
+	constexpr auto SELECTED_WHITE = get_color_from_hex(0x799c82);
+
+	constexpr auto HIGHLIGHT_WHITE = get_color_from_hex(0xc3d887);
+	constexpr auto HIGHLIGHT_BLACK = get_color_from_hex(0x93b166);
+
 
 	static char name[3];
 
@@ -130,28 +143,37 @@ void render_board(Window *window)
 		square sq = i ^ 56;
 		square file = sq & 7;
 
-		if (file != 0)
-			ImGui::SameLine(file * square_size.x); // render rank on same line
-
-		/* Chessboard square is black if the evenness of the file is equal to the evenness
-		 * of the rank, hence is white if not equal (xor) */
-		bool white = (sq ^ (sq >> 3)) & 1;
-		ImGui::PushStyleColor(ImGuiCol_Button, white ? BOARD_WHITE : BOARD_BLACK);
-
-		constexpr auto uv0 = ImVec2(0.0f, 0.0f);
-		constexpr auto uv1 = ImVec2(1.0f, 1.0f);
-		constexpr auto no_tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-		/* Prefix label name with ## to specifiy to IMGUI that it is an ID, and not label
-		 * text */
-		sprintf(name, "##%u", sq);
-
 		/* We also need a square for the side to move as we store rotated bitboards. If the
 		 * board is from black's perspective, we need to flip the square to get the piece
 		 * and colour information.
 		 */
 		square stm_square = sq ^ (!window->true_white * 56);
 
+		if (file != 0)
+			ImGui::SameLine(file * square_size.x); // render rank on same line
+
+		/* Chessboard square is black if the evenness of the file is equal to the evenness
+		 * of the rank, hence is white if not equal (xor) */
+		bool white = (sq ^ (sq >> 3)) & 1;
+		auto color = white ? BOARD_WHITE : BOARD_BLACK;
+
+		/* The last move was generated from the other sides pov, so we always flip it */
+		bool last_move = (stm_square ^ 56) == window->last_move.init
+		              || (stm_square ^ 56) == window->last_move.dest;
+
+		/* Disable highlighting previous move if we had no previous move (e.g. startpos) */
+		last_move &= window->had_last_move;
+
+		if (last_move) color = white ? HIGHLIGHT_WHITE : HIGHLIGHT_BLACK;
+		if (sq == window->selected) color = white ? SELECTED_WHITE : SELECTED_BLACK;
+
+		ImGui::PushStyleColor(ImGuiCol_Button, color);
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, color);
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, color);
+
+		/* Prefix label name with ## to specifiy to IMGUI that it is an ID, and not label
+		 * text */
+		sprintf(name, "##%u", sq);
 		piecetype piece = extract_piece(window->board, stm_square);
 
 		/* Again, we need to take care in getting the true colour of a piece */
@@ -159,13 +181,17 @@ void render_board(Window *window)
 		bool white_piece = friendly_piece == window->true_white;
 
 		size_t offset = white_piece ? WHITE_OFFSET : BLACK_OFFSET;
-		auto texture = (piece == NONE) ? nullptr
-		             : (ImTextureID) load_texture(piece + offset, window);
+
+		ImTextureID texture = nullptr;
+		if (piece != NONE) texture = load_texture(piece + offset, window);
+
+		constexpr auto uv0 = ImVec2(0.0f, 0.0f);
+		constexpr auto uv1 = ImVec2(1.0f, 1.0f);
+		constexpr auto no_tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 		bool pressed = (piece == NONE)
 			? ImGui::Button(name, square_size)
-			: ImGui::ImageButton(name, texture, square_size, uv0, uv1,
-					     BOARD_CLEAR, no_tint);
+			: ImGui::ImageButton(name, texture, square_size, uv0, uv1, CLEAR, no_tint);
 
 		if (pressed) handle_clicked_square(window, sq);
 	}
@@ -174,7 +200,7 @@ void render_board(Window *window)
 	 * pushed styles, or find a way to clear all of them
 	 */
 	ImGui::PopStyleVar(4);
-	ImGui::PopStyleColor(64);
+	ImGui::PopStyleColor(192);
 	ImGui::End();
 }
 
