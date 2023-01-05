@@ -1,6 +1,6 @@
-[submodule "graphics/imgui"]
-	path = graphics/imgui
+[submodule "src/graphics/imgui"]
+	path = src/graphics/imgui
 	url = https://github.com/ocornut/imgui
-[submodule "graphics/incbin"]
-	path = graphics/incbin
+[submodule "src/graphics/incbin"]
+	path = src/graphics/incbin
 	url = https://github.com/graphitemaster/incbin
