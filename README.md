@@ -1,4 +1,4 @@
-## Muon
+## Muon (pre-alpha software)
 
 Muon is a chess program that aims to be a useful tool for competitive chess players that is widely
 available for any OS with minimal dependecies.
