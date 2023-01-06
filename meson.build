@@ -26,16 +26,24 @@ IMGUI = declare_dependency(include_directories: ['src/graphics/imgui'])
 add_project_arguments('-DUSE_PEXT', language : ['c', 'cpp'])
 add_project_arguments('-march=native', language : ['c', 'cpp'])
 
+test('movegen-test',
+  executable('movegen-test', [
+    'src/common/bitbase.c',
+    'src/common/movegen.c',
+    'src/common/unittest.c',
+    'src/parser/fen.c',
+  ],
+  dependencies: SRC)
+)
+
 executable(
   'muon', [
     'src/main.c',
     'src/common/bitbase.c',
     'src/common/movegen.c',
-    'src/common/unittest.c',
     'src/graphics/renderer.cc',
     'src/graphics/textures.c',
     'src/graphics/window.c',
-    'src/parser/fen.c',
 
     'src/graphics/imgui/imgui.cpp',
     'src/graphics/imgui/imgui_draw.cpp',
@@ -47,6 +55,5 @@ executable(
   ],
 
   dependencies: [SDL, SDI, SRC, IMGUI],
-  link_args: ['-Lsrc/graphics/']
 )
 

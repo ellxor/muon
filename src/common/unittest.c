@@ -1,5 +1,3 @@
-#include "unittest.h"
-
 #include <assert.h>
 #include <stdio.h>
 #include <time.h>
@@ -84,8 +82,10 @@ size_t perft(Board board, unsigned depth)
 }
 
 
-void do_unit_tests()
+int main()
 {
+	init_bitbase_tables();
+
 	clock_t ticks = 0;
 	size_t total_nodes = 0;
 
