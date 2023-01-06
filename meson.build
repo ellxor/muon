@@ -31,9 +31,11 @@ executable(
     'src/main.c',
     'src/common/bitbase.c',
     'src/common/movegen.c',
+    'src/common/unittest.c',
     'src/graphics/renderer.cc',
     'src/graphics/textures.c',
     'src/graphics/window.c',
+    'src/parser/fen.c',
 
     'src/graphics/imgui/imgui.cpp',
     'src/graphics/imgui/imgui_draw.cpp',

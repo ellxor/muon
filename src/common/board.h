@@ -20,11 +20,15 @@ typedef enum : uint8_t { NONE, PAWN, KNIGHT, BISHOP, CASTLE, ROOK, QUEEN, KING }
 typedef struct { bitboard x, y, z, white; } Board;
 
 static inline
-Board startpos(void) {
-	constexpr Board board = { .x = 0x34FF00000000FF34,
-	                          .y = 0x7E0000000000007E,
-	                          .z = 0x9900000000000099,
-	                          .white = 0xFFFF };
+Board startpos(void)
+{
+	constexpr Board board = {
+		.x = 0x34FF00000000FF34,
+		.y = 0x7E0000000000007E,
+		.z = 0x9900000000000099,
+		.white = 0xFFFF,
+	};
+
 	return board;
 }
 
@@ -54,5 +58,18 @@ piecetype extract_piece(Board board, square sq)
 	return (piecetype)((((board.x >> sq) & 1) << 0)
 	                 | (((board.y >> sq) & 1) << 1)
 	                 | (((board.z >> sq) & 1) << 2));
+}
+
+
+/* Place a piece on a given square of the board. Note: this implementation assumes the square is
+ * empty, so must be cleared if previously occupuied. It also assumes the piece is friendly (white).
+ */
+static inline
+void set_square(Board *board, square sq, piecetype piece)
+{
+	board->x |= (((bitboard)piece >> 0) & 1) << sq;
+        board->y |= (((bitboard)piece >> 1) & 1) << sq;
+        board->z |= (((bitboard)piece >> 2) & 1) << sq;
+        board->white |= 1ull << sq;
 }
 

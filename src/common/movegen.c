@@ -1,4 +1,5 @@
 #include "movegen.h"
+#include <stdio.h>
 
 /* Generate pawn moves from a move mask, from a given direction. This allows us to
  * generate in more predictable loops.
@@ -44,7 +45,7 @@ void generate_pawn_moves(Board board, bitboard targets, bitboard pinned, square 
 	 * pieces dissappear in the checking direction. This introduces a slow branch into our pawn
 	 * move generation, but it is a necessary evil for full legality, however rare.
 	 */
-	bitboard candidates = south(east(en_passant) | west(en_passant));
+	bitboard candidates = south(east(en_passant) | west(en_passant)) & pawns;
 
 	// We optimise this branch by only checking if the king is actually on the 5th rank
 	if ((king & 56) == 32 && popcount(candidates) == 1)
@@ -328,18 +329,6 @@ MoveBuffer generate_moves(Board board)
         return moves;
 }
 
-
-/* Place a piece on a given square of the board. Note: this implementation assumes the square is
- * empty, so must be cleared if previously occupuied.
- */
-static inline
-void set_square(Board *board, square sq, piecetype piece)
-{
-	board->x |= (((bitboard)piece >> 0) & 1) << sq;
-        board->y |= (((bitboard)piece >> 1) & 1) << sq;
-        board->z |= (((bitboard)piece >> 2) & 1) << sq;
-        board->white |= 1ull << sq;
-}
 
 /* Make a legal move on the board state and update it. Note: like generate_moves, this function
  * also assumes that both board and move are legal.
