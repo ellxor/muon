@@ -335,8 +335,7 @@ MoveBuffer generate_moves(Board board)
  */
 void make_move(Board *board, move move)
 {
-	bitboard clear = (1ull << move.init) 
-	               | (1ull << move.dest);
+	bitboard clear = (1ull << move.init) | (1ull << move.dest);
 
 	bitboard occ = occupied(*board);
 	bitboard en_passant = board->white &~ occ;
@@ -350,9 +349,9 @@ void make_move(Board *board, move move)
 		clear |= (move.dest < move.init) ? (1 << A1) : (1 << H1);
 
 	// Removed pieces from cleared squares
-	board->x &= ~clear;
-	board->y &= ~clear;
-	board->z &= ~clear;
+	board->x     &= ~clear;
+	board->y     &= ~clear;
+	board->z     &= ~clear;
 	board->white &= ~clear;
 
 	// Move the piece itself, note: this also is correct for promotion case
@@ -374,9 +373,9 @@ void make_move(Board *board, move move)
 		black |= 256ull << move.init;
 
 	// Rotate bitboards to be from black's perspective
-	board->x = byteswap(board->x);
-	board->y = byteswap(board->y);
-	board->z = byteswap(board->z);
+	board->x     = byteswap(board->x);
+	board->y     = byteswap(board->y);
+	board->z     = byteswap(board->z);
 	board->white = byteswap(black);
 }
 

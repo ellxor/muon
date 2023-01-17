@@ -19,18 +19,15 @@ typedef enum : uint8_t { NONE, PAWN, KNIGHT, BISHOP, CASTLE, ROOK, QUEEN, KING }
  */
 typedef struct { bitboard x, y, z, white; } Board;
 
-static inline
-Board startpos(void)
-{
-	constexpr Board board = {
-		.x = 0x34FF00000000FF34,
-		.y = 0x7E0000000000007E,
-		.z = 0x9900000000000099,
-		.white = 0xFFFF,
-	};
 
-	return board;
-}
+constexpr Board BOARD_STARTPOS =
+{
+	.x = 0x34FF00000000FF34,
+	.y = 0x7E0000000000007E,
+	.z = 0x9900000000000099,
+	.white = 0xFFFF,
+};
+
 
 static inline
 bitboard occupied(Board board) {

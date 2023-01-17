@@ -6,6 +6,7 @@
 #include "movegen.h"
 #include <parser/fen.h>
 
+
 /* Unit-testing structure containing an FEN, and the (maximum) depth, as well as a list of expected
  * perft results at a given depth
  */
@@ -94,7 +95,7 @@ int main()
 	for (size_t index = 0; index < count_unit_tests; index += 1)
 	{
 		UnitTest test = unit_tests[index];
-		printf("\nRunning unit test %s (\"%s\"):\n", test.name, test.FEN);
+		printf("\nRunning unit test \"%s\" [%s]:\n", test.name, test.FEN);
 
 		bool white_to_move, ok;
 		Board board = parse_fen(test.FEN, &white_to_move, &ok);
@@ -107,7 +108,6 @@ int main()
 			ticks += clock();
 
 			printf("  depth %u: %zu\n", depth, nodes);
-
 			size_t expected = test.expected[depth-1];
 
 			if (nodes != expected) {
