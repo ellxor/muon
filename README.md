@@ -18,7 +18,7 @@ meson compile -C build/
 
 **TODO:**
 - [x] Add proper unit testing for chess move generation
-- [ ] Add game tree structure to store game (and variations)
+- [x] Add game tree structure to store game (and variations)
 - [x] Start work on parsing (FEN and PGN) to load positon and games
 - [ ] Add text area to display game moves
 - [ ] Add support for adding comments to chess positions / moves
