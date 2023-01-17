@@ -5,4 +5,4 @@
 void init_imgui(Window *);
 void destroy_imgui(void);
 void render_window(Window *);
-void renderer_handle_event(SDL_Event *);
+void renderer_handle_event(Window *, SDL_Event *);

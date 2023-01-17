@@ -40,6 +40,7 @@ executable(
   'muon', [
     'src/main.c',
     'src/common/bitbase.c',
+    'src/common/gametree.c',
     'src/common/movegen.c',
     'src/graphics/renderer.cc',
     'src/graphics/textures.c',

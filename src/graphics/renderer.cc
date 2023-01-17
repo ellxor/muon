@@ -3,12 +3,11 @@
 extern "C" {
 #include "renderer.h"
 #include "textures.h"
+#include <common/gametree.h>
 }
 
 #include <stdio.h>
 #include <stdint.h>
-
-#include <common/movegen.h>
 
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_sdl.h"
@@ -57,40 +56,25 @@ constexpr ImVec4 get_color_from_hex(uint32_t hex_color)
 static inline
 void handle_clicked_square(Window *window, square sq)
 {
-	if (window->selected == SQUARE_NONE)
+	if (window->selected == SQUARE_NONE) {
 		window->selected = sq;
-
-	else {
-		if (!window->legal_moves_generated) {
-			window->legal_moves = generate_moves(window->board);
-			window->legal_moves_generated = true;
-		}
-
-		square init = window->selected;
-		square dest = sq;
-
-		/* Rotate square back if it is black to move */
-		if (!window->true_white)
-			init ^= 56, dest ^= 56;
-
-		for (size_t i = 0; i < window->legal_moves.count; i += 1) {
-			move move = window->legal_moves.buffer[i];
-
-			if (move.init == init && move.dest == dest) {
-				make_move(&window->board, move);
-
-				window->true_white = !window->true_white;
-				window->legal_moves_generated = false;
-
-				window->last_move = move;
-				window->had_last_move = true;
-
-				break;
-			}
-		}
-
-		window->selected = SQUARE_NONE;
+		return;
 	}
+
+	square init = window->selected;
+	square dest = sq;
+
+	/* Rotate square back if it is black to move */
+	if (!window->true_white)
+		init ^= 56, dest ^= 56;
+
+	/* TODO: add selection for promoted piece */
+	move move = { init, dest, NONE, false };
+
+	if (gametree_make_move(move))
+		window->true_white = !window->true_white;
+
+	window->selected = SQUARE_NONE;
 }
 
 
@@ -158,13 +142,13 @@ void render_board(Window *window)
 		auto color = white ? BOARD_WHITE : BOARD_BLACK;
 
 		/* The last move was generated from the other sides pov, so we always flip it */
-		bool last_move = (stm_square ^ 56) == window->last_move.init
-		              || (stm_square ^ 56) == window->last_move.dest;
+		move *last_move = gametree_get_last_move();
 
-		/* Disable highlighting previous move if we had no previous move (e.g. startpos) */
-		last_move &= window->had_last_move;
+		bool is_last_move = (last_move != nullptr)
+		                 && ((stm_square ^ 56) == last_move->init
+		                 ||  (stm_square ^ 56) == last_move->dest);
 
-		if (last_move) color = white ? HIGHLIGHT_WHITE : HIGHLIGHT_BLACK;
+		if (is_last_move) color = white ? HIGHLIGHT_WHITE : HIGHLIGHT_BLACK;
 		if (sq == window->selected) color = white ? SELECTED_WHITE : SELECTED_BLACK;
 
 		ImGui::PushStyleColor(ImGuiCol_Button, color);
@@ -174,10 +158,12 @@ void render_board(Window *window)
 		/* Prefix label name with ## to specifiy to IMGUI that it is an ID, and not label
 		 * text */
 		sprintf(name, "##%u", sq);
-		piecetype piece = extract_piece(window->board, stm_square);
+
+		Board board = gametree_get_board();
+		piecetype piece = extract_piece(board, stm_square);
 
 		/* Again, we need to take care in getting the true colour of a piece */
-		bool friendly_piece = (window->board.white >> stm_square) & 1;
+		bool friendly_piece = (board.white >> stm_square) & 1;
 		bool white_piece = friendly_piece == window->true_white;
 
 		size_t offset = white_piece ? WHITE_OFFSET : BLACK_OFFSET;
@@ -226,5 +212,21 @@ void render_window(Window *window)
 /* Thin wrapper function to get SDL_Event from main window loop and hand it off to IMGUI. This will
  * buttons to respond to keypressed and other similar events.
  */
-void renderer_handle_event(SDL_Event *event) { ImGui_ImplSDL2_ProcessEvent(event); }
+void renderer_handle_event(Window *window, SDL_Event *event)
+{
+	ImGui_ImplSDL2_ProcessEvent(event);
+	bool toggle = false;
+
+	switch (event->type)
+	{
+		case SDL_KEYUP: switch (event->key.keysym.sym)
+		{
+			case SDLK_LEFT:  toggle = gametree_undo_move(); break;
+			case SDLK_RIGHT: toggle = gametree_redo_move();  break;
+		}
+	}
+
+	if (toggle)
+		window->true_white = !window->true_white;
+}
 

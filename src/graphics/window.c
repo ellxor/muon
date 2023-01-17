@@ -46,9 +46,9 @@ Window *init_window(const char *title)
 	window.renderer = SDL_CreateRenderer(window.frame, -1, renderer_flags);
 	if (!window.renderer) log_fatal_error("could not create SDL renderer");
 
-	window.board = startpos();
 	window.true_white = true;
 	window.selected = SQUARE_NONE;
+
 	return &window;
 }
 
@@ -76,7 +76,7 @@ void start_window_loop(Window *window)
 		SDL_Event event;
 
 		while (SDL_PollEvent(&event)) {
-			renderer_handle_event(&event);
+			renderer_handle_event(window, &event);
 
 			quit = (event.type == SDL_QUIT) ||
 			      ((event.type == SDL_WINDOWEVENT &&

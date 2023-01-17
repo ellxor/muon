@@ -9,15 +9,8 @@
  */
 typedef struct
 {
-	Board         board;
-	bool          true_white;
-	square        selected;
-
-	move          last_move;
-	bool          had_last_move;
-
-	MoveBuffer    legal_moves;
-	bool          legal_moves_generated;
+	bool   true_white;
+	square selected;
 
 	SDL_Renderer *renderer;
 	SDL_Window   *frame;
