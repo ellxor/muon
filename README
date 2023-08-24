@@ -1,0 +1,9 @@
+Chess move generation library in C99.
+
+It is fast - can generate 524 million moves per second on my potato machine.
+It does however require BMI2 enabled CPUs (Haswell/Zen3 or newer).
+
+To build the perft test, compile main.c using your favourite compiler.
+A makefile is included for a clang PGO build.
+
+If you find a bug please open an issue or email me (ellxor@protonmail.ch).
