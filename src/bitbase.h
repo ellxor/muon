@@ -100,7 +100,7 @@ void init_bitbase_tables()
 			// Clear outer bits of mask. These not needed for magic bitboards as a
 			// sliding piece can always move to the edge of the board if the square
 			// just before is unoccupied. We also clear the bit of the square as this
-			// is always occupied by the moving piece itself so is irrelvent.
+			// is always occupied by the moving piece itself so is irrelevant.
 
 			bitboard outer = AFILE | HFILE | RANK1 | RANK8 | bit;
 			bitboard mask = (diag | anti) &~ outer;

@@ -15,12 +15,12 @@
 
 typedef uint16_t move;
 
-#define M(init, dest, piece)	((init) | (dest) << 6 | (piece) << 12)
-#define M_CASTLING		0x8000u
+#define M(init, dest, piece)	((init) | (dest) << 6 | (piece) << 13)
+#define M_CASTLING		0x1000u
 
 #define M_INIT(mov)   (((mov)      ) & 0x3f)
 #define M_DEST(mov)   (((mov) >>  6) & 0x3f)
-#define M_PIECE(mov)  (((mov) >> 12) & 0x07)
+#define M_PIECE(mov)  ( (mov) >> 13)
 
 
 //  The generated moves are stored in a fixed-size buffer for performance, reallocations would slow
@@ -183,8 +183,8 @@ void generate_king_moves(movebuffer *buffer, movegen_info info, board board)
 	// the ATT bitboards must not be attacked, as castling out-of, through or into check is not
 	// allowed.
 
-#define KATT  (1 << E1 | 1 << F1 | 1 << G1)
 #define QATT  (1 << C1 | 1 << D1 | 1 << E1)
+#define KATT  (1 << E1 | 1 << F1 | 1 << G1)
 
 	if (castling & (1 << A1) && !(info.attacked & QATT))  append_move(buffer, M(E1, C1, KING) | M_CASTLING);
 	if (castling & (1 << H1) && !(info.attacked & KATT))  append_move(buffer, M(E1, G1, KING) | M_CASTLING);
@@ -284,7 +284,7 @@ movebuffer generate_moves(board board)
         // If we are in check from more than one piece, then we can only move king otherwise
 	// we must block the check, or capture the checking piece
 
-	if (popcnt(checks) & 2) goto double_check;
+	if (popcnt(checks) == 2) goto double_check;
 	if (checks) info.targets &= line_between[info.king][ctz(checks)];
 
 	// Generate moves of pinned pieces, note: pinned knights can never move
@@ -330,10 +330,11 @@ board make_move(board board, move move)
 	board.y     &= ~clear;
 	board.z     &= ~clear;
 	board.white &= ~clear;
+
 	set_square(&board, dest, piece);
 
 	// Set rook on castling and removing castling rights for any king move
-	if (move &  M_CASTLING) set_square(&board, (dest + init) >> 1, ROOK);
+	if (move & M_CASTLING) set_square(&board, (dest + init) >> 1, ROOK);
 	if (piece == KING) board.x ^= extract(board, CASTLE) & RANK1;
 
 	// Flip white bitboard to black and update en-passant square
