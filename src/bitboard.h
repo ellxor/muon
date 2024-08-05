@@ -21,6 +21,7 @@ bitboard north(bitboard bb) { return bb << 8; }
 bitboard south(bitboard bb) { return bb >> 8; }
 bitboard  east(bitboard bb) { return (bb &~ HFILE) << 1; }
 bitboard  west(bitboard bb) { return (bb &~ AFILE) >> 1; }
+bitboard bswap(bitboard bb) { return __builtin_bswap64(bb); }
 
 
 //  Add definitions for useful CPU intrinsics functions for bitboard that are not available through
@@ -33,7 +34,6 @@ bitboard  west(bitboard bb) { return (bb &~ AFILE) >> 1; }
 
 #include <x86intrin.h>
 
-#define bswap   __builtin_bswap64
 #define clz      _lzcnt_u64
 #define ctz      _tzcnt_u64
 #define popcnt  __builtin_popcountll

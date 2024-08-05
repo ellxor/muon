@@ -321,7 +321,7 @@ board make_move(board board, move move)
 	bitboard occ = occupied(board);
 	bitboard en_passant = board.white &~ occ;
 
-	// Remove captured en-passant pawn / castling rook
+	// Remove captured en-passant pawn & castling rook
 	if (piece == PAWN)	clear |= south(en_passant & clear);
 	if (move & M_CASTLING)	clear |= (dest < init) ? (1 << A1) : (1 << H1);
 
@@ -332,10 +332,8 @@ board make_move(board board, move move)
 	board.white &= ~clear;
 
 	set_square(&board, dest, piece);
-
-	// Set rook on castling and removing castling rights for any king move
-	if (move & M_CASTLING) set_square(&board, (dest + init) >> 1, ROOK);
-	if (piece == KING) board.x ^= extract(board, CASTLE) & RANK1;
+	if (move & M_CASTLING)	set_square(&board, (dest + init) >> 1, ROOK);
+	if (piece == KING)	board.x ^= extract(board, CASTLE) & RANK1; // remove castling rights
 
 	// Flip white bitboard to black and update en-passant square
 	bitboard black = occupied(board) &~ board.white;
