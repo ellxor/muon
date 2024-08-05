@@ -65,12 +65,17 @@ const size_t count_unit_tests = sizeof unit_tests / sizeof unit_tests[0];
 size_t perft(board pos, unsigned depth)
 {
 	movebuffer moves = generate_moves(pos);
-	if (depth == 1) return moves.count;
+	if (depth == 1) return moves.count + popcnt(moves.pawn_push);
 
 	size_t total = 0;
 
 	for (size_t i = 0; i < moves.count; i += 1) {
 		board child = make_move(pos, moves.buffer[i]);
+		total += perft(child, depth - 1);
+	}
+
+	for bits(moves.pawn_push) {
+		board child = make_pawn_push(pos, ctz(moves.pawn_push));
 		total += perft(child, depth - 1);
 	}
 

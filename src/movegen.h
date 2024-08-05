@@ -31,7 +31,7 @@ typedef uint16_t move;
 //    FEN: 3Q4/1Q4Q1/4Q3/2Q4R/Q4Q2/3Q4/1Q4Rp/1K1BBNNk w - -
 
 #define MAX_MOVES 218
-typedef struct { size_t count; move buffer[MAX_MOVES]; } movebuffer;
+typedef struct { bitboard pawn_push; size_t count; move buffer[MAX_MOVES]; } movebuffer;
 
 // some useful info to pass around to move generation
 typedef struct { bitboard attacked, targets, en_passant, pinned; square king; } movegen_info;
@@ -118,13 +118,13 @@ void generate_pawn_moves(movebuffer *buffer, movegen_info info, board board)
 	east_capture = (east_capture | pinned_east_capture) & targets;
 	west_capture = (west_capture | pinned_west_capture) & targets;
 
+	buffer->pawn_push = (single_move &~ RANK8) | double_move;
+
 	// promotions, note: double moves cannot promote
         generate_partial_pawn_moves(buffer, single_move  & RANK8, N,   true);
         generate_partial_pawn_moves(buffer, east_capture & RANK8, N+E, true);
         generate_partial_pawn_moves(buffer, west_capture & RANK8, N+W, true);
 
-	generate_partial_pawn_moves(buffer, single_move  &~ RANK8, N,   false);
-        generate_partial_pawn_moves(buffer, double_move,           N+N, false);
         generate_partial_pawn_moves(buffer, east_capture &~ RANK8, N+E, false);
         generate_partial_pawn_moves(buffer, west_capture &~ RANK8, N+W, false);
 }
@@ -339,9 +339,31 @@ board make_move(board board, move move)
 
 	// Flip white bitboard to black and update en-passant square
 	bitboard black = occupied(board) &~ board.white;
-	if (piece == PAWN && (dest - init) == N+N)  black |= (1ull << N) << init;
 
 	// Rotate bitboards to be from black's perspective
+	board.x     = bswap(board.x);
+	board.y     = bswap(board.y);
+	board.z     = bswap(board.z);
+	board.white = bswap(black);
+
+	return board;
+}
+
+board make_pawn_push(board board, square dest)
+{
+	bitboard occ = occupied(board);
+	bitboard black = occ &~ board.white;
+
+	bitboard mask = 1ull << dest;
+	bitboard down = south(mask);
+
+	// case of double pawn move
+	if (down &~ occ)  black |= down, down = south(down);
+
+	mask |= down;
+	board.x ^= mask;
+	board.white ^= mask;
+
 	board.x     = bswap(board.x);
 	board.y     = bswap(board.y);
 	board.z     = bswap(board.z);
