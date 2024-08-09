@@ -329,7 +329,6 @@ board make_move(board board, move move)
 	board.x     &= ~clear;
 	board.y     &= ~clear;
 	board.z     &= ~clear;
-	board.white &= ~clear;
 
 	set_square(&board, dest, piece);
 	if (move & M_CASTLING)	set_square(&board, (dest + init) >> 1, ROOK);
@@ -360,7 +359,6 @@ board make_pawn_push(board board, square dest)
 
 	mask |= down;
 	board.x ^= mask;
-	board.white ^= mask;
 
 	board.x     = bswap(board.x);
 	board.y     = bswap(board.y);
