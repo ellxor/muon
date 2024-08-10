@@ -235,6 +235,7 @@ bitboard generate_pinned(board board, square king, bitboard *checks, bitboard pi
         bitboard bishops = extract(board, BISHOP) &~ board.white;
         bitboard rooks   = extract(board, ROOK)   &~ board.white;
         bitboard queens  = extract(board, QUEEN)  &~ board.white;
+	bitboard white = board.white & occ;
 
         bishops |= queens;
         rooks   |= queens;
@@ -245,7 +246,7 @@ bitboard generate_pinned(board board, square king, bitboard *checks, bitboard pi
 	*checks |= bishop_ray & bishops;
 	*checks |= rook_ray & rooks;
 
-	bitboard nocc = occ & ~((bishop_ray | rook_ray) & board.white);
+	bitboard nocc = occ & ~((bishop_ray | rook_ray) & white);
 
         bishops &= bishop_attacks(king, nocc);
         rooks   &= rook_attacks(king, nocc);
@@ -255,7 +256,7 @@ bitboard generate_pinned(board board, square king, bitboard *checks, bitboard pi
 
 	for bits(candidates) {
 		bitboard ray = line_between[king][ctz(candidates)];
-		pinned_rays[ctz(ray & board.white)] = ray;
+		pinned_rays[ctz(ray & white)] = ray;
 		pinned |= ray;
 	}
 
