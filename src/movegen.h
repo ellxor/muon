@@ -34,7 +34,7 @@ typedef uint16_t move;
 typedef struct { bitboard pawn_push; size_t count; move buffer[MAX_MOVES]; } movebuffer;
 
 // some useful info to pass around to move generation
-typedef struct { bitboard attacked, targets, en_passant, pinned; square king; } movegen_info;
+typedef struct { bitboard attacked, targets, en_passant, hpinned, vpinned; square king; } movegen_info;
 
 
 void append_move(movebuffer *moves, move move) {
@@ -96,8 +96,10 @@ void generate_pawn_moves(movebuffer *buffer, movegen_info info, board board)
 	targets |= info.en_passant & north(info.targets);
 	enemy   |= info.en_passant;
 
-	bitboard normal_pawns = pawns &~ info.pinned;
-	bitboard pinned_pawns = pawns & info.pinned;
+	bitboard pinned = info.hpinned | info.vpinned;
+
+	bitboard normal_pawns = pawns &~ pinned;
+	bitboard pinned_pawns = pawns & pinned;
 
 	bitboard file = AFILE << (info.king & 7); // only pinned pawns on same file as king can move forward
 	bitboard forward = normal_pawns | (pinned_pawns & file);
@@ -108,10 +110,8 @@ void generate_pawn_moves(movebuffer *buffer, movegen_info info, board board)
 	bitboard east_capture = north(east(normal_pawns)) & enemy;
 	bitboard west_capture = north(west(normal_pawns)) & enemy;
 
-	bitboard diagonal = bishop_attacks(info.king, 0); // only pinned pawns diagonal from king can capture
-
-	bitboard pinned_east_capture = north(east(pinned_pawns & diagonal)) & enemy & diagonal;
-	bitboard pinned_west_capture = north(west(pinned_pawns & diagonal)) & enemy & diagonal;
+	bitboard pinned_east_capture = north(east(pawns & info.vpinned)) & enemy & info.vpinned;
+	bitboard pinned_west_capture = north(west(pawns & info.vpinned)) & enemy & info.vpinned;
 
 	single_move  = single_move & targets;
 	double_move  = double_move & targets;
@@ -142,22 +142,32 @@ bitboard generic_attacks(piecetype piece, square sq, bitboard occ)
 }
 
 
-void generate_piece_moves(movebuffer *buffer, movegen_info info, piecetype piece, board board, bool pinned,
-                          bitboard pinned_rays[64])
+void generate_piece_moves(movebuffer *buffer, movegen_info info, piecetype piece, board board, bool pinned)
 {
-	bitboard pieces = extract(board, piece) & board.white & (pinned ? info.pinned : ~info.pinned);
+	bitboard _pinned = info.hpinned | info.vpinned;
+	if (pinned) _pinned = (piece == BISHOP) ? info.vpinned : info.hpinned;
+
 	bitboard occ    = occupied(board);
+	bitboard pieces = extract(board, piece);
+	bitboard queens = extract(board, QUEEN);
+	if (pinned) pieces |= queens;
+
+	pieces &= board.white & (pinned ? _pinned : ~_pinned);
 
 	for bits(pieces) {
 		square init = ctz(pieces);
 		bitboard attacks = generic_attacks(piece, init, occ) & info.targets;
+		piecetype p = piece;
 
-		if (pinned) // If the piece is pinned, then the moves must remain aligned to the king.
-			attacks &= pinned_rays[init];
+		// If the piece is pinned, then the moves must remain aligned to the king.
+		if (pinned) {
+			attacks &= _pinned;
+			if (queens & pieces & -pieces) p = QUEEN;
+		}
 
 		for bits(attacks) {
 			square dest = ctz(attacks);
-			append_move(buffer, M(init, dest, piece));
+			append_move(buffer, M(init, dest, p));
 		}
 	}
 }
@@ -229,7 +239,7 @@ bitboard enemy_attacked(board board, bitboard *checks)
 // Generate a mask that contains all pinned pieces for the side to move. Note, this may include other
 // random squares. We also generate sliding (bishop, rook and queen) checks here for efficiency.
 
-bitboard generate_pinned(board board, square king, bitboard *checks, bitboard pinned_rays[65])
+void generate_pinned(board board, movegen_info *info, bitboard *checks)
 {
         bitboard occ     = occupied(board);
         bitboard bishops = extract(board, BISHOP) &~ board.white;
@@ -240,27 +250,19 @@ bitboard generate_pinned(board board, square king, bitboard *checks, bitboard pi
         bishops |= queens;
         rooks   |= queens;
 
-	bitboard bishop_ray = bishop_attacks(king, occ);
-	bitboard rook_ray = rook_attacks(king, occ);
+	bitboard bishop_ray = bishop_attacks(info->king, occ);
+	bitboard rook_ray = rook_attacks(info->king, occ);
 
 	*checks |= bishop_ray & bishops;
 	*checks |= rook_ray & rooks;
 
 	bitboard nocc = occ & ~((bishop_ray | rook_ray) & white);
 
-        bishops &= bishop_attacks(king, nocc);
-        rooks   &= rook_attacks(king, nocc);
+        bishops &= bishop_attacks(info->king, nocc);
+        rooks   &= rook_attacks(info->king, nocc);
 
-	bitboard candidates = bishops | rooks;
-	bitboard pinned = 0;
-
-	for bits(candidates) {
-		bitboard ray = line_between[king][ctz(candidates)];
-		pinned_rays[ctz(ray & white)] = ray;
-		pinned |= ray;
-	}
-
-	return pinned;
+	for bits(bishops) info->vpinned |= line_between[info->king][ctz(bishops)];
+	for bits(rooks) info->hpinned |= line_between[info->king][ctz(rooks)];
 }
 
 
@@ -270,17 +272,15 @@ bitboard generate_pinned(board board, square king, bitboard *checks, bitboard pi
 movebuffer generate_moves(board board)
 {
         movebuffer moves = {.count = 0};
-	movegen_info info;
+	movegen_info info = {};
 
         info.king = ctz(extract(board, KING) & board.white);
-	static bitboard pinned_rays[65];
-
 	bitboard checks = 0;
 
 	info.en_passant = board.white &~ occupied(board);
-        info.attacked = enemy_attacked(board, &checks);
-        info.pinned   = generate_pinned(board, info.king, &checks, pinned_rays);
 	info.targets = ~(occupied(board) & board.white); // cannot capture own pieces
+        info.attacked = enemy_attacked(board, &checks);
+        generate_pinned(board, &info, &checks);
 
         // If we are in check from more than one piece, then we can only move king otherwise
 	// we must block the check, or capture the checking piece
@@ -289,18 +289,17 @@ movebuffer generate_moves(board board)
 	if (checks) info.targets &= line_between[info.king][ctz(checks)];
 
 	// Generate moves of pinned pieces, note: pinned knights can never move
-	if (info.pinned & board.white) {
-		generate_piece_moves(&moves, info, BISHOP, board, true, pinned_rays);
-		generate_piece_moves(&moves, info, ROOK,   board, true, pinned_rays);
-		generate_piece_moves(&moves, info, QUEEN,  board, true, pinned_rays);
+	if ((info.hpinned | info.vpinned) & board.white) {
+		generate_piece_moves(&moves, info, BISHOP, board, true);
+		generate_piece_moves(&moves, info, ROOK,   board, true);
 	}
 
 	// Generate regular moves for non-pinned pieces
 	generate_pawn_moves (&moves, info, board);
-	generate_piece_moves(&moves, info, KNIGHT, board, false, pinned_rays);
-	generate_piece_moves(&moves, info, BISHOP, board, false, pinned_rays);
-	generate_piece_moves(&moves, info, ROOK,   board, false, pinned_rays);
-	generate_piece_moves(&moves, info, QUEEN,  board, false, pinned_rays);
+	generate_piece_moves(&moves, info, KNIGHT, board, false);
+	generate_piece_moves(&moves, info, BISHOP, board, false);
+	generate_piece_moves(&moves, info, ROOK,   board, false);
+	generate_piece_moves(&moves, info, QUEEN,  board, false);
 
 double_check:
         generate_king_moves(&moves, info, board);

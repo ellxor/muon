@@ -1,6 +1,6 @@
 Chess move generation library in C99.
 
-It is fast - can generate 570 million moves per second on my potato machine.
+It is fast - can generate 587 million moves per second on my potato machine.
 It does however require BMI2 enabled CPUs (Haswell/Zen3 or newer).
 
 To build the perft test, compile main.c using your favourite compiler.
