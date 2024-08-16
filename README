@@ -1,3 +1,4 @@
+** Experimental branch for non bmi2::pext magic bitboard **
 Chess move generation library in C99.
 
 It is fast - can generate 587 million moves per second on my potato machine.
